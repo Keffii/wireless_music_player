@@ -17,7 +17,6 @@ public class PlayerCommandLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String command;
     private LocalDateTime timestamp = LocalDateTime.now();
 
