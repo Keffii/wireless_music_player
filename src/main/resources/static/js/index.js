@@ -13,6 +13,5 @@ async function updateState() {
     document.getElementById('stateDisplay').innerText = JSON.stringify(data, null, 2);
 }
 
-
 setInterval(updateState, 2000);
 updateState();
