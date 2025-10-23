@@ -81,7 +81,7 @@ public class BluetoothListener {
 
     private void handleJson(String line) {
         try {
-            // Ignore garbage data
+            // Clean up data
             if (!line.startsWith("{") || !line.endsWith("}")) {
                 return;
             }
