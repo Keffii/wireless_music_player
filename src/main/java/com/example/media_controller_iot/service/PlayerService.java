@@ -20,25 +20,6 @@ public class PlayerService {
         this.playerCommandLogRepo = playerCommandLogRepo;
     }
 
-    public void mediaCommands(String cmd) {
-        switch (cmd) {
-            case "PLAY" -> isPlaying = true;
-            case "PAUSE" -> isPlaying = false;
-            case "NEXT" -> currentSong++;
-            case "PREV" -> currentSong = Math.max(currentSong - 1, 1);
-            case "MUTE" -> toggleMute();
-            default -> {
-                if (cmd.trim().startsWith("VOLUME:")) {
-                    handleVolumeCommand(cmd);
-                }
-            }
-        }
-
-        lastCommand = cmd;
-        System.out.println("Command received: " + cmd);
-        playerCommandLogRepo.save(new PlayerCommandLog(cmd));
-    }
-
     private void toggleMute() {
         if (!isMuted) {
             previousVolume = volume;
@@ -62,10 +43,52 @@ public class PlayerService {
         }
     }
 
+    public void mediaCommands(String cmd) {
+        switch (cmd) {
+            case "PLAY" -> isPlaying = true;
+            case "PAUSE" -> isPlaying = false;
+            case "NEXT" -> {
+                currentSong++;
+                if (currentSong > 3) currentSong = 1;
+            }
+            case "PREV" -> currentSong = Math.max(currentSong - 1, 1);
+            case "MUTE" -> toggleMute();
+            default -> {
+                if (cmd.trim().startsWith("VOLUME:")) {
+                    handleVolumeCommand(cmd);
+                }
+            }
+        }
+
+        lastCommand = cmd;
+        System.out.println("Command received: " + cmd);
+        playerCommandLogRepo.save(new PlayerCommandLog(cmd));
+    }
+
+    private String getSongTitle(int index) {
+        return switch (index) {
+            case 1 -> "Better Day";
+            case 2 -> "Abstract Beauty";
+            case 3 -> "Cascade Breathe";
+            default -> "Unknown Song";
+        };
+    }
+
+    private String getSongArtist(int index) {
+        return switch (index) {
+            case 1 -> "penguinmusic";
+            case 2 -> "Grand_Project";
+            case 3 -> "NverAvetyanMusic";
+            default -> "Unknown Artist";
+        };
+    }
+
     public Map<String, Object> getState() {
         return Map.of(
                 "isPlaying", isPlaying,
                 "currentSong", currentSong,
+                "title", getSongTitle(currentSong),
+                "artist", getSongArtist(currentSong),
                 "volume", volume,
                 "isMuted", isMuted,
                 "lastCommand", lastCommand

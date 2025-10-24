@@ -28,11 +28,11 @@ h2 {
 }
 
 
-.header {
+.song-name {
     color: #F6AFC7;
     padding: 10px;
     max-width: 400px;
-    margin-bottom: -25px;
+    margin-bottom: -40px;
 }
 
 .artist-name {
@@ -98,8 +98,4 @@ button {
 .grafana-icon:hover {
     transform: scale(1.2);
     transition: 0.2s;
-}
-
-.status {
-
 }

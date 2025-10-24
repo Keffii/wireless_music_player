@@ -8,16 +8,16 @@
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1>Song Name</h1>
+    <div class="song-name">
+        <h1 id="song-title">Song Name</h1>
     </div>
 
     <div class="artist-name">
-        <p>Artist Name</p>
+        <p id="song-artist">Artist Name</p>
     </div>
 
     <div class="music-player">
-        <audio id="musicPlayer" src="/music/abstract-beauty-378257.mp3"></audio>
+        <audio></audio>
     </div>
 
     <div class="progress-bar">
@@ -27,7 +27,7 @@
     <div class="buttons">
         <div class="buttons-row">
             <button onclick="sendCommand('PREV')"><i class="fa-solid fa-backward"></i></button>
-            <button class="play-button" onclick="sendCommand('PLAY')"><i class="fa-solid fa-play"></i></button>
+            <button class="play-button" onclick="sendCommand('PLAY')"><i id="play-pause-icon" class="fa-solid fa-play"></i></button>
             <button onclick="sendCommand('NEXT')"><i class="fa-solid fa-forward"></i></button>
         </div>
 
