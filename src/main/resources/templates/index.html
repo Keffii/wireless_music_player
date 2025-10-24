@@ -12,22 +12,22 @@
         <h1>Song Name</h1>
     </div>
 
-
-    <div class="artist_album">
-        <p>Artist Name <span class="divider"></span> Album Name</p>
+    <div class="artist-name">
+        <p>Artist Name</p>
     </div>
 
+    <div class="music-player">
+        <audio id="musicPlayer" src="/music/abstract-beauty-378257.mp3"></audio>
+    </div>
 
-    <div class="progress_bar">
+    <div class="progress-bar">
         <input type="range">
     </div>
-
-
 
     <div class="buttons">
         <div class="buttons-row">
             <button onclick="sendCommand('PREV')"><i class="fa-solid fa-backward"></i></button>
-            <button class="play_button" onclick="sendCommand('PLAY')"><i class="fa-solid fa-play"></i></button>
+            <button class="play-button" onclick="sendCommand('PLAY')"><i class="fa-solid fa-play"></i></button>
             <button onclick="sendCommand('NEXT')"><i class="fa-solid fa-forward"></i></button>
         </div>
 
@@ -45,11 +45,11 @@
     </div>
 </div>
 
-<div class="grafana_text">
+<div class="grafana-text">
     <a href="http://localhost:3000/d/adcnd7x/music-remote-esp32?orgId=1&from=now-30d&to=now&timezone=browser&kiosk=true" target="_blank">
         <h3>View Statistics in Grafana</h3>
         <img src="http://localhost:3000/public/build/static/img/grafana_icon.1e0deb6b.svg"
-             alt="Grafana Dashboard" class="grafana_icon">
+             alt="Grafana Dashboard" class="grafana-icon">
     </a>
 </div>
 

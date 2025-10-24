@@ -1,3 +1,18 @@
+const musicPlayer = document.querySelector('#musicPlayer');
+const playButton = document.querySelector('.play-button');
+const playIcon = playButton.querySelector('i');
+
+playButton.addEventListener('click', () => {
+    if (musicPlayer.paused) {
+        musicPlayer.play();
+        playIcon.classList.replace('fa-play', 'fa-pause');
+    } else {
+        musicPlayer.pause();
+        playIcon.classList.replace('fa-pause', 'fa-play');
+    }
+
+});
+
 async function sendCommand(cmd) {
     await fetch('/api/player/command', {
         method: 'POST',
