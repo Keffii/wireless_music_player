@@ -64,6 +64,13 @@ public class PlayerService {
             }
             case "PREV" -> currentSong = Math.max(currentSong - 1, 1);
             case "MUTE" -> toggleMute();
+            case "PLAY_PAUSE" -> {
+                isPlaying = !isPlaying;
+                if (isPlaying && isMuted) {
+                    volume = previousVolume;
+                    isMuted = false;
+                }
+            }
 
             default -> {
                 if (cmd.trim().startsWith("VOLUME:")) {
