@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div id="audio-unlock" class="unlock-overlay">
+    ▶ Tap to enable audio playback
+</div>
+
 <div class="container">
     <div class="song-name">
         <h1 id="song-title">Song Name</h1>
@@ -24,17 +28,17 @@
         <input type="range">
     </div>
 
+    <div class="volume-control">
+        <i id="volume-icon" class="fa-solid fa-volume-up"></i>
+        <input id="volume-slider" type="range" min="0" max="100" value="50">
+    </div>
+
+
     <div class="buttons">
         <div class="buttons-row">
             <button onclick="sendCommand('PREV')"><i class="fa-solid fa-backward"></i></button>
             <button class="play-button" onclick="sendCommand('PLAY')"><i id="play-pause-icon" class="fa-solid fa-play"></i></button>
             <button onclick="sendCommand('NEXT')"><i class="fa-solid fa-forward"></i></button>
-        </div>
-
-        <div class="buttons-row">
-            <button onclick="sendCommand('VOLUMEDOWN')"><i class="fa-solid fa-volume-down"></i></button>
-            <button onclick="sendCommand('MUTE')"><i class="fa-solid fa-volume-xmark"></i></button>
-            <button onclick="sendCommand('VOLUMEUP')"><i class="fa-solid fa-volume-up"></i></button>
         </div>
     </div>
 

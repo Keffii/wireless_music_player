@@ -25,6 +25,7 @@ public class PlayerService {
             previousVolume = volume;
             volume = 0;
             isMuted = true;
+            isPlaying = false;
         } else {
             volume = previousVolume;
             isMuted = false;
@@ -45,7 +46,14 @@ public class PlayerService {
 
     public void mediaCommands(String cmd) {
         switch (cmd) {
-            case "PLAY" -> isPlaying = true;
+            case "PLAY" -> {
+                isPlaying = true;
+                // Auto unmute when playing
+                if (isMuted) {
+                    volume = previousVolume;
+                    isMuted = false;
+                }
+            }
             case "PAUSE" -> {
                 if (!isPlaying) return;
                 isPlaying = false;

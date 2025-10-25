@@ -1,6 +1,9 @@
 const musicPlayer = document.querySelector('audio');
 const playButton = document.querySelector('.play-button');
 const playIcon = playButton.querySelector('#play-pause-icon');
+const volumeSlider = document.querySelector('#volume-slider');
+const volumeIcon = document.querySelector('#volume-icon');
+
 
 let currentSongIndex = 0;
 let lastSongIndex = null;
@@ -32,8 +35,6 @@ function playSong(index) {
     songTitle.innerText = song.title;
     songArtist.innerText = song.artist;
     songSource.src = song.src;
-
-    songSource.play();
 }
 
 function playPauseListener() {
@@ -43,6 +44,32 @@ function playPauseListener() {
         } else {
             await sendCommand("PAUSE");
         }
+    });
+}
+
+function volumeControl() {
+    volumeSlider.addEventListener('input', () => {
+        musicPlayer.volume = volumeSlider.value / 100;
+        sendCommand(`VOLUME:${volumeSlider.value}`);
+    });
+
+    volumeIcon.addEventListener('click', () => {
+        sendCommand("MUTE");
+    });
+}
+
+
+function unlockOverlay() {
+    const unlockOverlay = document.querySelector('#audio-unlock');
+
+    unlockOverlay.addEventListener('click', () => {
+        musicPlayer.muted = true;
+        musicPlayer.play()
+            .then(() => {
+                musicPlayer.pause();
+                musicPlayer.muted = false;
+                unlockOverlay.classList.add('hidden');
+            });
     });
 }
 
@@ -58,29 +85,68 @@ async function sendCommand(cmd) {
 async function updateState() {
     const res = await fetch('/api/player/state');
     const data = await res.json();
-    document.getElementById('stateDisplay').innerText = JSON.stringify(data, null, 2);
+
+    // Update debug
+    document.getElementById('stateDisplay').innerText =
+        JSON.stringify(data, null, 2);
+
+    // Update displayed title + artist
     document.querySelector('#song-title').innerText = data.title;
     document.querySelector('#song-artist').innerText = data.artist;
+
     currentSongIndex = data.currentSong - 1;
+
+    // Change audio source only if song changed
     if (currentSongIndex !== lastSongIndex) {
-        document.querySelector("audio").src = songs[currentSongIndex].src;
+        musicPlayer.src = songs[currentSongIndex].src;
         lastSongIndex = currentSongIndex;
-        musicPlayer.play();
+        safePlay();
     }
+
+    // Sync playback state
     if (data.isPlaying && musicPlayer.paused) {
-        musicPlayer.play()
+        safePlay();
     } else if (!data.isPlaying && !musicPlayer.paused) {
         musicPlayer.pause();
     }
 
-    if (data.isPlaying) {
-        playIcon.classList.replace('fa-play', 'fa-pause');
+    // Sync volume + mute state
+    volumeSlider.value = data.volume;
+    musicPlayer.volume = data.volume / 100;
+    musicPlayer.muted = data.isMuted;
+
+    if (data.isMuted || data.volume === 0) {
+        volumeIcon.classList.replace('fa-volume-up', 'fa-volume-xmark');
     } else {
+        volumeIcon.classList.replace('fa-volume-xmark', 'fa-volume-up');
+    }
+
+    // Prevent PAUSE icon while muted, always show Play
+    if (data.isMuted) {
         playIcon.classList.replace('fa-pause', 'fa-play');
+    } else {
+        if (data.isPlaying) {
+            playIcon.classList.replace('fa-play', 'fa-pause');
+        } else {
+            playIcon.classList.replace('fa-pause', 'fa-play');
+        }
     }
 }
 
-    setInterval(updateState, 1000);
+
+
+function safePlay() {
+    musicPlayer.play().catch(() => {
+        console.warn("Autoplay blocked — waiting for user interaction.");
+    });
+}
+
+
+
+
+setInterval(updateState, 1000);
 updateState();
-playPauseListener()
+unlockOverlay();
+playPauseListener();
+volumeControl();
 playSong(currentSongIndex);
