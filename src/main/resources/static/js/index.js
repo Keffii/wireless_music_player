@@ -10,17 +10,17 @@ const songs = [
     {
     title: "Better Day",
     artist: "penguinmusic",
-    src: "music/better-day-186374.mp3"
+    src: "/music/better-day-186374.mp3"
     },
     {
     title: "Abstract Beauty",
     artist: "Grand_Project",
-    src: "music/abstract-beauty-378257.mp3"
+    src: "/music/abstract-beauty-378257.mp3"
     },
     {
     title: "Cascade Breathe",
     artist: "NverAvetyanMusic",
-    src: "music/cascade-breathe-future-garage-412839.mp3"
+    src: "/music/cascade-breathe-future-garage-412839.mp3"
     }
 ];
 
@@ -36,19 +36,15 @@ function playSong(index) {
     songSource.play();
 }
 
-function playPauseListener(){
-    playButton.addEventListener('click', () => {
+function playPauseListener() {
+    playButton.addEventListener('click', async () => {
         if (musicPlayer.paused) {
-            musicPlayer.play();
-            playIcon.classList.replace('fa-play', 'fa-pause');
+            await sendCommand("PLAY");
         } else {
-            musicPlayer.pause();
-            playIcon.classList.replace('fa-pause', 'fa-play');
+            await sendCommand("PAUSE");
         }
-
     });
 }
-
 
 async function sendCommand(cmd) {
     await fetch('/api/player/command', {
@@ -66,24 +62,25 @@ async function updateState() {
     document.querySelector('#song-title').innerText = data.title;
     document.querySelector('#song-artist').innerText = data.artist;
     currentSongIndex = data.currentSong - 1;
-    if (currentSongIndex != lastSongIndex) {
+    if (currentSongIndex !== lastSongIndex) {
         document.querySelector("audio").src = songs[currentSongIndex].src;
         lastSongIndex = currentSongIndex;
         musicPlayer.play();
+    }
+    if (data.isPlaying && musicPlayer.paused) {
+        musicPlayer.play()
+    } else if (!data.isPlaying && !musicPlayer.paused) {
+        musicPlayer.pause();
+    }
 
-
-        /*if (data.isPlaying & musicPlayer.paused) {
-            musicPlayer.play();
-            playIcon.classList.replace('fa-pause', 'fa-play');
-        }
-        else if (!data.isPlaying & musicPlayer.paused) {
-            musicPlayer.pause();
-            playIcon.classList.replace('fa-play', 'fa-pause');
-        }*/
+    if (data.isPlaying) {
+        playIcon.classList.replace('fa-play', 'fa-pause');
+    } else {
+        playIcon.classList.replace('fa-pause', 'fa-play');
     }
 }
 
-setInterval(updateState, 1000);
+    setInterval(updateState, 1000);
 updateState();
 playPauseListener()
 playSong(currentSongIndex);

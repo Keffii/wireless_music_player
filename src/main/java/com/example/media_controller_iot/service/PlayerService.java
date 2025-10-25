@@ -46,13 +46,17 @@ public class PlayerService {
     public void mediaCommands(String cmd) {
         switch (cmd) {
             case "PLAY" -> isPlaying = true;
-            case "PAUSE" -> isPlaying = false;
+            case "PAUSE" -> {
+                if (!isPlaying) return;
+                isPlaying = false;
+            }
             case "NEXT" -> {
                 currentSong++;
                 if (currentSong > 3) currentSong = 1;
             }
             case "PREV" -> currentSong = Math.max(currentSong - 1, 1);
             case "MUTE" -> toggleMute();
+
             default -> {
                 if (cmd.trim().startsWith("VOLUME:")) {
                     handleVolumeCommand(cmd);
