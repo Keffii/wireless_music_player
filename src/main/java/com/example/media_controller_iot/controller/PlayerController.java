@@ -2,12 +2,13 @@ package com.example.media_controller_iot.controller;
 
 import com.example.media_controller_iot.service.PlayerService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/player")
-@CrossOrigin(origins = "*") // for esp32
-
+@CrossOrigin(origins = "*")
 public class PlayerController {
 
     private final PlayerService playerService;
@@ -21,8 +22,25 @@ public class PlayerController {
         String command = body.get("command");
         playerService.mediaCommands(command);
     }
+
     @GetMapping("/state")
     public Map<String, Object> getState() {
         return playerService.getState();
+    }
+
+    @GetMapping("/stream")
+    public SseEmitter stream() {
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        playerService.addEmitter(emitter);
+
+        try {
+            emitter.send(playerService.getState());
+        } catch (Exception ignored) {
+        }
+
+        emitter.onCompletion(() -> playerService.removeEmitter(emitter));
+        emitter.onTimeout(() -> playerService.removeEmitter(emitter));
+
+        return emitter;
     }
 }

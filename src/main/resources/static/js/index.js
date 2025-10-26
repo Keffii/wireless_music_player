@@ -3,6 +3,9 @@ const playButton = document.querySelector('.play-button');
 const playIcon = playButton.querySelector('#play-pause-icon');
 const volumeSlider = document.querySelector('#volume-slider');
 const volumeIcon = document.querySelector('#volume-icon');
+const progressSlider = document.querySelector('#progress-slider');
+const currentTimeLabel = document.querySelector('#current-time');
+const totalDurationLabel = document.querySelector('#total-duration');
 
 
 let currentSongIndex = 0;
@@ -79,41 +82,34 @@ async function sendCommand(cmd) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: cmd })
     });
-    await updateState();
 }
 
-async function updateState() {
-    const res = await fetch('/api/player/state');
-    const data = await res.json();
-
-    // Update debug
+function updateStateFromServer(data) {
     document.getElementById('stateDisplay').innerText =
         JSON.stringify(data, null, 2);
 
-    // Update displayed title + artist
     document.querySelector('#song-title').innerText = data.title;
     document.querySelector('#song-artist').innerText = data.artist;
 
     currentSongIndex = data.currentSong - 1;
 
-    // Change audio source only if song changed
+    // Update song when changed
     if (currentSongIndex !== lastSongIndex) {
         musicPlayer.src = songs[currentSongIndex].src;
         lastSongIndex = currentSongIndex;
         safePlay();
     }
 
-    // Sync playback state
     if (data.isPlaying && musicPlayer.paused) {
         safePlay();
     } else if (!data.isPlaying && !musicPlayer.paused) {
         musicPlayer.pause();
     }
 
-    // Sync volume + mute state
-    volumeSlider.value = data.volume;
     musicPlayer.volume = data.volume / 100;
     musicPlayer.muted = data.isMuted;
+
+    volumeSlider.value = data.volume;
 
     if (data.isMuted || data.volume === 0) {
         volumeIcon.classList.replace('fa-volume-up', 'fa-volume-xmark');
@@ -121,19 +117,45 @@ async function updateState() {
         volumeIcon.classList.replace('fa-volume-xmark', 'fa-volume-up');
     }
 
-    // Prevent PAUSE icon while muted, always show Play
     if (data.isMuted) {
         playIcon.classList.replace('fa-pause', 'fa-play');
+    } else if (data.isPlaying) {
+        playIcon.classList.replace('fa-play', 'fa-pause');
     } else {
-        if (data.isPlaying) {
-            playIcon.classList.replace('fa-play', 'fa-pause');
-        } else {
-            playIcon.classList.replace('fa-pause', 'fa-play');
-        }
+        playIcon.classList.replace('fa-pause', 'fa-play');
     }
 }
 
+function progressBar() {
+    musicPlayer.addEventListener('timeupdate', () => {
+        progressSlider.value = musicPlayer.currentTime;
+        currentTimeLabel.innerText = formatTime(musicPlayer.currentTime);
+    });
 
+    musicPlayer.addEventListener('loadedmetadata', () => {
+        progressSlider.max = musicPlayer.duration;
+        totalDurationLabel.innerText = formatTime(musicPlayer.duration);
+    });
+
+    progressSlider.addEventListener('input', () => {
+        currentTimeLabel.innerText = formatTime(progressSlider.value);
+    });
+
+    progressSlider.addEventListener('change', () => {
+        const wasPlaying = !musicPlayer.paused;
+        musicPlayer.currentTime = progressSlider.value;
+
+        if (wasPlaying) {
+            safePlay();
+        }
+    });
+}
+
+function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${min}:${sec}`;
+}
 
 function safePlay() {
     musicPlayer.play().catch(() => {
@@ -142,11 +164,23 @@ function safePlay() {
 }
 
 
+function connectSSE() {
+    const eventSource = new EventSource("/api/player/stream");
 
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        updateStateFromServer(data);
+    };
 
-setInterval(updateState, 1000);
-updateState();
+    eventSource.onerror = () => {
+        console.warn("SSE connection lost — reconnecting...");
+        setTimeout(connectSSE, 2000);
+    };
+}
+
+connectSSE();
 unlockOverlay();
 playPauseListener();
 volumeControl();
+progressBar();
 playSong(currentSongIndex);

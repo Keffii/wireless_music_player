@@ -4,9 +4,14 @@ import com.example.media_controller_iot.models.PlayerCommandLog;
 import com.example.media_controller_iot.repository.PlayerCommandLogRepo;
 import org.springframework.stereotype.Service;
 import java.util.Map;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 
 @Service
 public class PlayerService {
+
+    public final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     private final PlayerCommandLogRepo playerCommandLogRepo;
     private boolean isPlaying = false;
@@ -20,6 +25,27 @@ public class PlayerService {
     public PlayerService(PlayerCommandLogRepo playerCommandLogRepo) {
         this.playerCommandLogRepo = playerCommandLogRepo;
     }
+
+    public void addEmitter(SseEmitter emitter) {
+        emitters.add(emitter);
+    }
+
+    public void removeEmitter(SseEmitter emitter) {
+        emitters.remove(emitter);
+    }
+
+
+    private void broadcastState() {
+        Map<String, Object> state = getState();
+        emitters.forEach(emitter -> {
+            try {
+                emitter.send(state);
+            } catch (Exception e) {
+                emitters.remove(emitter);
+            }
+        });
+    }
+
 
     private void toggleMute() {
         if (!isMuted) {
@@ -89,6 +115,7 @@ public class PlayerService {
         lastCommand = cmd;
         System.out.println("Command received: " + cmd);
         playerCommandLogRepo.save(new PlayerCommandLog(cmd));
+        broadcastState();
     }
 
     private String getSongTitle(int index) {
