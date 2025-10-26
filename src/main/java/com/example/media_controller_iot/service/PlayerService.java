@@ -14,6 +14,7 @@ public class PlayerService {
     private int volume = 50;
     private boolean isMuted = false;
     private int previousVolume = 50;
+    private boolean wasPlayingBeforeMute = false;
     private String lastCommand = "NONE";
 
     public PlayerService(PlayerCommandLogRepo playerCommandLogRepo) {
@@ -25,10 +26,12 @@ public class PlayerService {
             previousVolume = volume;
             volume = 0;
             isMuted = true;
+            wasPlayingBeforeMute = isPlaying;
             isPlaying = false;
         } else {
             volume = previousVolume;
             isMuted = false;
+            isPlaying = wasPlayingBeforeMute;
         }
     }
 
@@ -38,6 +41,10 @@ public class PlayerService {
             if (newVolume != volume) {
                 volume = Math.min(100, Math.max(0, newVolume));
                 isMuted = false;
+                if (wasPlayingBeforeMute) {
+                    isPlaying = true;
+                    wasPlayingBeforeMute = false;
+                }
             }
         } catch (Exception e) {
             System.err.println("Invalid volume command format: " + cmd);
@@ -48,10 +55,10 @@ public class PlayerService {
         switch (cmd) {
             case "PLAY" -> {
                 isPlaying = true;
-                // Auto unmute when playing
                 if (isMuted) {
                     volume = previousVolume;
                     isMuted = false;
+                    wasPlayingBeforeMute = false;
                 }
             }
             case "PAUSE" -> {
