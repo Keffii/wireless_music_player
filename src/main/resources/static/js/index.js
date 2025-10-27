@@ -9,40 +9,22 @@ const totalDurationLabel = document.querySelector('#total-duration');
 const coverArt = document.querySelector('#cover-art');
 
 
-let currentSongIndex = 0;
-let lastSongIndex = null;
+let lastSongId = null;
+let songs = [];
+let songsLoaded = false;
+let shuffleEnabled = false;
+let repeatEnabled = true; // default behaviour
 
 
-const songs = [
-    {
-    title: "Better Day",
-    artist: "penguinmusic",
-    src: "/music/better-day-186374.mp3",
-    cover: "/cover/better-day.jpg"
-    },
-    {
-    title: "Abstract Beauty",
-    artist: "Grand_Project",
-    src: "/music/abstract-beauty-378257.mp3",
-    cover: "/cover/abstract-beauty.jpg"
-    },
-    {
-    title: "Cascade Breathe",
-    artist: "NverAvetyanMusic",
-    src: "/music/cascade-breathe-future-garage-412839.mp3",
-    cover: "/cover/cascade-breathe.jpg"
-    }
-];
+async function loadSongs() {
+    const res = await fetch('/api/player/songs');
+    songs = await res.json();
+    songsLoaded = true;
+    console.log("✅ Songs loaded:", songs);
+}
 
-function playSong(index) {
-    const songTitle = document.querySelector('#song-title');
-    const songArtist = document.querySelector('#song-artist');
-    const songSource = musicPlayer;
-    const song = songs[index];
-    songTitle.innerText = song.title;
-    songArtist.innerText = song.artist;
-    songSource.src = song.src;
-    coverArt.src = song.cover;
+function resolveSongById(id) {
+    return songs.find(s => s.id === id);
 }
 
 function playPauseListener() {
@@ -93,16 +75,14 @@ function updateStateFromServer(data) {
     document.getElementById('stateDisplay').innerText =
         JSON.stringify(data, null, 2);
 
-    document.querySelector('#song-title').innerText = data.title;
-    document.querySelector('#song-artist').innerText = data.artist;
+    const song = resolveSongById(data.currentSongId);
+    if (!song) return;
 
-    currentSongIndex = data.currentSong - 1;
-
-    // Update song when changed
-    if (currentSongIndex !== lastSongIndex) {
-        musicPlayer.src = songs[currentSongIndex].src;
-        lastSongIndex = currentSongIndex;
-        coverArt.src = songs[currentSongIndex].cover;
+    // Detect when current song changes
+    if (song.id !== lastSongId) {
+        musicPlayer.src = song.srcUrl;
+        coverArt.src = song.coverUrl;
+        lastSongId = song.id;
         safePlay();
     }
 
@@ -114,7 +94,6 @@ function updateStateFromServer(data) {
 
     musicPlayer.volume = data.volume / 100;
     musicPlayer.muted = data.isMuted;
-
     volumeSlider.value = data.volume;
 
     if (data.isMuted || data.volume === 0) {
@@ -141,6 +120,15 @@ function progressBar() {
     musicPlayer.addEventListener('loadedmetadata', () => {
         progressSlider.max = musicPlayer.duration;
         totalDurationLabel.innerText = formatTime(musicPlayer.duration);
+        musicPlayer.addEventListener('ended', () => {
+            if (shuffleEnabled) {
+                sendCommand("NEXT");
+            } else if (repeatEnabled) {
+                sendCommand("NEXT");
+            } else {
+                console.log("Playback ended, no repeat.");
+            }
+        });
     });
 
     progressSlider.addEventListener('input', () => {
@@ -169,13 +157,16 @@ function safePlay() {
     });
 }
 
-
 function connectSSE() {
     const eventSource = new EventSource("/api/player/stream");
 
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
         updateStateFromServer(data);
+        shuffleEnabled = data.shuffle;
+        repeatEnabled = data.repeat;
+        updateShuffleUI();
+        updateRepeatUI();
     };
 
     eventSource.onerror = () => {
@@ -184,9 +175,32 @@ function connectSSE() {
     };
 }
 
-connectSSE();
-unlockOverlay();
-playPauseListener();
-volumeControl();
-progressBar();
-playSong(currentSongIndex);
+function updateShuffleUI() {
+    const btn = document.getElementById('shuffle-btn');
+    btn.style.opacity = shuffleEnabled ? "1" : "0.3";
+}
+
+function updateRepeatUI() {
+    const btn = document.getElementById('repeat-btn');
+    btn.style.opacity = repeatEnabled ? "1" : "0.3";
+}
+
+
+(async function init() {
+    await loadSongs();
+    connectSSE();
+    unlockOverlay();
+    playPauseListener();
+    volumeControl();
+    progressBar();
+    document.getElementById('shuffle-btn').addEventListener('click', () => {
+        shuffleEnabled = !shuffleEnabled;
+        updateShuffleUI();
+    });
+
+    document.getElementById('repeat-btn').addEventListener('click', () => {
+        repeatEnabled = !repeatEnabled;
+        updateRepeatUI();
+    });
+
+})();

@@ -1,51 +1,92 @@
 package com.example.media_controller_iot.service;
 
 import com.example.media_controller_iot.models.PlayerCommandLog;
+import com.example.media_controller_iot.models.Songs;
+import com.example.media_controller_iot.models.VolumeLog;
 import com.example.media_controller_iot.repository.PlayerCommandLogRepo;
+import com.example.media_controller_iot.repository.SongsRepo;
+import com.example.media_controller_iot.repository.VolumeLogRepo;
 import org.springframework.stereotype.Service;
-import java.util.Map;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import java.util.concurrent.CopyOnWriteArrayList;
 
+import java.util.*;
 
 @Service
 public class PlayerService {
 
-    public final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
-
+    private final SongsRepo songsRepo;
     private final PlayerCommandLogRepo playerCommandLogRepo;
+    private final VolumeLogRepo volumeLogRepo;
+    private boolean shuffleEnabled = false;
+    private boolean repeatEnabled = true;
+
+
+    private final List<SseEmitter> emitters = new ArrayList<>();
+
     private boolean isPlaying = false;
-    private int currentSong = 1;
-    private int volume = 50;
     private boolean isMuted = false;
     private int previousVolume = 50;
     private boolean wasPlayingBeforeMute = false;
+    private int volume = 50;
     private String lastCommand = "NONE";
 
-    public PlayerService(PlayerCommandLogRepo playerCommandLogRepo) {
+    private Songs currentSong;
+
+    public PlayerService(SongsRepo songsRepo,
+                         PlayerCommandLogRepo playerCommandLogRepo,
+                         VolumeLogRepo volumeLogRepo) {
+        this.songsRepo = songsRepo;
         this.playerCommandLogRepo = playerCommandLogRepo;
+        this.volumeLogRepo = volumeLogRepo;
+        loadInitialSong(); // Load songs from db
     }
 
-    public void addEmitter(SseEmitter emitter) {
-        emitters.add(emitter);
+    private void loadInitialSong() {
+        List<Songs> songs = songsRepo.findAll();
+        if (!songs.isEmpty()) {
+            currentSong = songs.get(0);
+        }
     }
 
-    public void removeEmitter(SseEmitter emitter) {
-        emitters.remove(emitter);
-    }
-
+    public void addEmitter(SseEmitter emitter) { emitters.add(emitter); }
+    public void removeEmitter(SseEmitter emitter) { emitters.remove(emitter); }
 
     private void broadcastState() {
         Map<String, Object> state = getState();
-        emitters.forEach(emitter -> {
+        emitters.removeIf(emitter -> {
             try {
                 emitter.send(state);
+                return false;
             } catch (Exception e) {
-                emitters.remove(emitter);
+                return true;
             }
         });
     }
 
+    private void nextSong() {
+        List<Songs> songs = songsRepo.findAll();
+        if (songs.isEmpty()) return;
+
+        if (shuffleEnabled) {
+            Random r = new Random();
+            Songs newSong;
+            do {
+                newSong = songs.get(r.nextInt(songs.size()));
+            } while (newSong.equals(currentSong));
+            currentSong = newSong;
+        } else {
+            int idx = songs.indexOf(currentSong);
+            currentSong = songs.get((idx + 1) % songs.size());
+        }
+    }
+
+
+    private void prevSong() {
+        List<Songs> songs = songsRepo.findAll();
+        if (songs.isEmpty()) return;
+        int index = songs.indexOf(currentSong);
+        currentSong = songs.get((index - 1 + songs.size()) % songs.size());
+    }
 
     private void toggleMute() {
         if (!isMuted) {
@@ -61,90 +102,54 @@ public class PlayerService {
         }
     }
 
-    private void handleVolumeCommand(String cmd) {
+    private void handleVolume(String cmd) {
         try {
             int newVolume = Integer.parseInt(cmd.split(":")[1]);
-            if (newVolume != volume) {
-                volume = Math.min(100, Math.max(0, newVolume));
-                isMuted = false;
-                if (wasPlayingBeforeMute) {
-                    isPlaying = true;
-                    wasPlayingBeforeMute = false;
-                }
-            }
+            volume = Math.max(0, Math.min(newVolume, 100));
+            isMuted = (volume == 0);
+            volumeLogRepo.save(new VolumeLog(volume));
         } catch (Exception e) {
-            System.err.println("Invalid volume command format: " + cmd);
+            System.err.println("Invalid VOLUME command: " + cmd);
         }
     }
 
     public void mediaCommands(String cmd) {
         switch (cmd) {
-            case "PLAY" -> {
-                isPlaying = true;
-                if (isMuted) {
-                    volume = previousVolume;
-                    isMuted = false;
-                    wasPlayingBeforeMute = false;
-                }
-            }
-            case "PAUSE" -> {
-                if (!isPlaying) return;
-                isPlaying = false;
-            }
-            case "NEXT" -> {
-                currentSong++;
-                if (currentSong > 3) currentSong = 1;
-            }
-            case "PREV" -> currentSong = Math.max(currentSong - 1, 1);
+            case "PLAY" -> isPlaying = true;
+            case "PAUSE" -> isPlaying = false;
+            case "NEXT" -> nextSong();
+            case "PREV" -> prevSong();
             case "MUTE" -> toggleMute();
-            case "PLAY_PAUSE" -> {
-                isPlaying = !isPlaying;
-                if (isPlaying && isMuted) {
-                    volume = previousVolume;
-                    isMuted = false;
-                }
-            }
-
+            case "PLAY_PAUSE" -> isPlaying = !isPlaying;
+            case "SHUFFLE" -> shuffleEnabled = !shuffleEnabled;
+            case "REPEAT" -> repeatEnabled = !repeatEnabled;
             default -> {
-                if (cmd.trim().startsWith("VOLUME:")) {
-                    handleVolumeCommand(cmd);
-                }
+                if (cmd.startsWith("VOLUME:")) handleVolume(cmd);
             }
         }
 
         lastCommand = cmd;
-        System.out.println("Command received: " + cmd);
-        playerCommandLogRepo.save(new PlayerCommandLog(cmd));
+
+        playerCommandLogRepo.save(new PlayerCommandLog(cmd)); // Logs to DB
         broadcastState();
     }
 
-    private String getSongTitle(int index) {
-        return switch (index) {
-            case 1 -> "Better Day";
-            case 2 -> "Abstract Beauty";
-            case 3 -> "Cascade Breathe";
-            default -> "Unknown Song";
-        };
-    }
+    public Map<String, Object> getState() {  // Returns DB metadata
+        if (currentSong == null) loadInitialSong();
 
-    private String getSongArtist(int index) {
-        return switch (index) {
-            case 1 -> "penguinmusic";
-            case 2 -> "Grand_Project";
-            case 3 -> "NverAvetyanMusic";
-            default -> "Unknown Artist";
-        };
-    }
 
-    public Map<String, Object> getState() {
-        return Map.of(
-                "isPlaying", isPlaying,
-                "currentSong", currentSong,
-                "title", getSongTitle(currentSong),
-                "artist", getSongArtist(currentSong),
-                "volume", volume,
-                "isMuted", isMuted,
-                "lastCommand", lastCommand
+        return Map.ofEntries(
+                Map.entry("isPlaying", isPlaying),
+                Map.entry("currentSongId", currentSong.getId()),
+                Map.entry("title", currentSong.getTitle()),
+                Map.entry("artist", currentSong.getArtist()),
+                Map.entry("srcUrl", currentSong.getSrcUrl()),
+                Map.entry("coverUrl", currentSong.getCoverUrl()),
+                Map.entry("volume", volume),
+                Map.entry("isMuted", isMuted),
+                Map.entry("lastCommand", lastCommand),
+                Map.entry("shuffle", shuffleEnabled),
+                Map.entry("repeat", repeatEnabled)
         );
     }
 }
