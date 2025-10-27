@@ -45,6 +45,16 @@ h2 {
             0 0 20px rgba(0,0,0,0.5);
 }
 
+.cover {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.cover img {
+    max-width: 100%;
+    border-radius: 10px;
+}
+
 
 .song-name {
     color: #F6AFC7;
@@ -63,7 +73,42 @@ h2 {
 }
 
 .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 350px;  /* Adjust this value as needed */
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
 
+.volume-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 350px;  /* Same as progress-bar */
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+
+#progress-slider,
+#volume-slider {
+    flex: 1;
+    min-width: 0;
+}
+
+#volume-icon {
+    min-width: 40px;
+    text-align: center;
+}
+
+#current-time,
+#total-duration {
+    min-width: 40px;
+    text-align: center;
 }
 
 #volume-icon:hover {

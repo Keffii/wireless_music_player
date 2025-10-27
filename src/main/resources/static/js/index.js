@@ -6,6 +6,7 @@ const volumeIcon = document.querySelector('#volume-icon');
 const progressSlider = document.querySelector('#progress-slider');
 const currentTimeLabel = document.querySelector('#current-time');
 const totalDurationLabel = document.querySelector('#total-duration');
+const coverArt = document.querySelector('#cover-art');
 
 
 let currentSongIndex = 0;
@@ -16,17 +17,20 @@ const songs = [
     {
     title: "Better Day",
     artist: "penguinmusic",
-    src: "/music/better-day-186374.mp3"
+    src: "/music/better-day-186374.mp3",
+    cover: "/cover/better-day.jpg"
     },
     {
     title: "Abstract Beauty",
     artist: "Grand_Project",
-    src: "/music/abstract-beauty-378257.mp3"
+    src: "/music/abstract-beauty-378257.mp3",
+    cover: "/cover/abstract-beauty.jpg"
     },
     {
     title: "Cascade Breathe",
     artist: "NverAvetyanMusic",
-    src: "/music/cascade-breathe-future-garage-412839.mp3"
+    src: "/music/cascade-breathe-future-garage-412839.mp3",
+    cover: "/cover/cascade-breathe.jpg"
     }
 ];
 
@@ -38,6 +42,7 @@ function playSong(index) {
     songTitle.innerText = song.title;
     songArtist.innerText = song.artist;
     songSource.src = song.src;
+    coverArt.src = song.cover;
 }
 
 function playPauseListener() {
@@ -97,6 +102,7 @@ function updateStateFromServer(data) {
     if (currentSongIndex !== lastSongIndex) {
         musicPlayer.src = songs[currentSongIndex].src;
         lastSongIndex = currentSongIndex;
+        coverArt.src = songs[currentSongIndex].cover;
         safePlay();
     }
 
