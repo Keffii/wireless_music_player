@@ -78,7 +78,7 @@ h2 {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    max-width: 350px;  /* Adjust this value as needed */
+    max-width: 350px;
     margin: 0 auto;
     margin-bottom: 10px;
 }
@@ -89,7 +89,7 @@ h2 {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    max-width: 350px;  /* Same as progress-bar */
+    max-width: 350px;
     margin: 0 auto;
     margin-bottom: 10px;
 }
@@ -149,13 +149,26 @@ button {
     padding: 0;
 }
 
-
 .play-button:hover {
     background-color: #F6AFC7;
 }
 
 .prev-next-btn:hover {
     background-color: lightpink;
+}
+
+#shuffle-btn,
+#repeat-btn {
+    width: 60px;
+    height: 60px;
+    background-color: white;
+    color: hotpink;
+    border: 2px solid hotpink;
+    border-radius: 50%;
+    margin: 10px;
+    font-size: 20px;
+    padding: 0;
+    opacity: 0.3;
 }
 
 .grafana-text a {

@@ -13,7 +13,7 @@ let lastSongId = null;
 let songs = [];
 let songsLoaded = false;
 let shuffleEnabled = false;
-let repeatEnabled = true; // default behaviour
+let repeatEnabled = false;
 
 
 async function loadSongs() {
@@ -72,11 +72,18 @@ async function sendCommand(cmd) {
 }
 
 function updateStateFromServer(data) {
+    document.querySelector('#song-title').innerText = data.title;
+    document.querySelector('#song-artist').innerText = data.artist;
     document.getElementById('stateDisplay').innerText =
         JSON.stringify(data, null, 2);
 
     const song = resolveSongById(data.currentSongId);
     if (!song) return;
+    coverArt.classList.add("hidden-album");
+    setTimeout(() => {
+        coverArt.src = song.coverUrl;
+        coverArt.classList.remove("hidden-album");
+    }, 200);
 
     // Detect when current song changes
     if (song.id !== lastSongId) {
@@ -194,13 +201,10 @@ function updateRepeatUI() {
     volumeControl();
     progressBar();
     document.getElementById('shuffle-btn').addEventListener('click', () => {
-        shuffleEnabled = !shuffleEnabled;
-        updateShuffleUI();
+        sendCommand("SHUFFLE");
     });
 
     document.getElementById('repeat-btn').addEventListener('click', () => {
-        repeatEnabled = !repeatEnabled;
-        updateRepeatUI();
+        sendCommand("REPEAT");
     });
-
 })();

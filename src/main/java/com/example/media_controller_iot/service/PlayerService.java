@@ -18,7 +18,7 @@ public class PlayerService {
     private final PlayerCommandLogRepo playerCommandLogRepo;
     private final VolumeLogRepo volumeLogRepo;
     private boolean shuffleEnabled = false;
-    private boolean repeatEnabled = true;
+    private boolean repeatEnabled = false;
 
 
     private final List<SseEmitter> emitters = new ArrayList<>();
@@ -67,6 +67,10 @@ public class PlayerService {
         List<Songs> songs = songsRepo.findAll();
         if (songs.isEmpty()) return;
 
+        if (repeatEnabled && !shuffleEnabled) {
+            return;
+        }
+
         if (shuffleEnabled) {
             Random r = new Random();
             Songs newSong;
@@ -79,6 +83,7 @@ public class PlayerService {
             currentSong = songs.get((idx + 1) % songs.size());
         }
     }
+
 
 
     private void prevSong() {
@@ -130,7 +135,7 @@ public class PlayerService {
 
         lastCommand = cmd;
 
-        playerCommandLogRepo.save(new PlayerCommandLog(cmd)); // Logs to DB
+        playerCommandLogRepo.save(new PlayerCommandLog(cmd, currentSong));
         broadcastState();
     }
 
