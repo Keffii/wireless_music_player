@@ -8,19 +8,27 @@ const currentTimeLabel = document.querySelector('#current-time');
 const totalDurationLabel = document.querySelector('#total-duration');
 const coverArt = document.querySelector('#cover-art');
 
-
 let lastSongId = null;
 let songs = [];
 let songsLoaded = false;
 let shuffleEnabled = false;
 let repeatEnabled = false;
 
+// Slider background update function for Chrome
+function updateSliderBackground(slider) {
+    const value = slider.value;
+    const min = slider.min || 0;
+    const max = slider.max || 100;
+    const percentage = ((value - min) / (max - min)) * 100;
+
+    slider.style.background = `linear-gradient(to right, hotpink 0%, hotpink ${percentage}%, white ${percentage}%, white 100%)`;
+}
 
 async function loadSongs() {
     const res = await fetch('/api/player/songs');
     songs = await res.json();
     songsLoaded = true;
-    console.log("✅ Songs loaded:", songs);
+    console.log("Songs loaded:", songs);
 }
 
 function resolveSongById(id) {
@@ -41,13 +49,13 @@ function volumeControl() {
     volumeSlider.addEventListener('input', () => {
         musicPlayer.volume = volumeSlider.value / 100;
         sendCommand(`VOLUME:${volumeSlider.value}`);
+        updateSliderBackground(volumeSlider);
     });
 
     volumeIcon.addEventListener('click', () => {
         sendCommand("MUTE");
     });
 }
-
 
 function unlockOverlay() {
     const unlockOverlay = document.querySelector('#audio-unlock');
@@ -74,8 +82,9 @@ async function sendCommand(cmd) {
 function updateStateFromServer(data) {
     document.querySelector('#song-title').innerText = data.title;
     document.querySelector('#song-artist').innerText = data.artist;
-    document.getElementById('stateDisplay').innerText =
-        JSON.stringify(data, null, 2);
+    // --- USE FOR DEBUGGING ---
+    /* document.getElementById('stateDisplay').innerText =
+        JSON.stringify(data, null, 2); */
 
     const song = resolveSongById(data.currentSongId);
     if (!song) return;
@@ -102,6 +111,7 @@ function updateStateFromServer(data) {
     musicPlayer.volume = data.volume / 100;
     musicPlayer.muted = data.isMuted;
     volumeSlider.value = data.volume;
+    updateSliderBackground(volumeSlider);
 
     if (data.isMuted || data.volume === 0) {
         volumeIcon.classList.replace('fa-volume-up', 'fa-volume-xmark');
@@ -122,24 +132,22 @@ function progressBar() {
     musicPlayer.addEventListener('timeupdate', () => {
         progressSlider.value = musicPlayer.currentTime;
         currentTimeLabel.innerText = formatTime(musicPlayer.currentTime);
+        updateSliderBackground(progressSlider);
     });
 
     musicPlayer.addEventListener('loadedmetadata', () => {
         progressSlider.max = musicPlayer.duration;
         totalDurationLabel.innerText = formatTime(musicPlayer.duration);
+        updateSliderBackground(progressSlider);
+
         musicPlayer.addEventListener('ended', () => {
-            if (shuffleEnabled) {
-                sendCommand("NEXT");
-            } else if (repeatEnabled) {
-                sendCommand("NEXT");
-            } else {
-                console.log("Playback ended, no repeat.");
-            }
+            sendCommand("NEXT"); // Always autoplay next song
         });
     });
 
     progressSlider.addEventListener('input', () => {
         currentTimeLabel.innerText = formatTime(progressSlider.value);
+        updateSliderBackground(progressSlider);
     });
 
     progressSlider.addEventListener('change', () => {
@@ -170,10 +178,19 @@ function connectSSE() {
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
         updateStateFromServer(data);
+
         shuffleEnabled = data.shuffle;
         repeatEnabled = data.repeat;
         updateShuffleUI();
         updateRepeatUI();
+
+        // Handle seek forward from esp32 controller
+        if (data.lastCommand === "SEEK_FORWARD") {
+            musicPlayer.currentTime = Math.min(
+                musicPlayer.currentTime + 10,
+                musicPlayer.duration
+            );
+        }
     };
 
     eventSource.onerror = () => {
@@ -181,6 +198,7 @@ function connectSSE() {
         setTimeout(connectSSE, 2000);
     };
 }
+
 
 function updateShuffleUI() {
     const btn = document.getElementById('shuffle-btn');
@@ -192,7 +210,6 @@ function updateRepeatUI() {
     btn.style.opacity = repeatEnabled ? "1" : "0.3";
 }
 
-
 (async function init() {
     await loadSongs();
     connectSSE();
@@ -200,6 +217,10 @@ function updateRepeatUI() {
     playPauseListener();
     volumeControl();
     progressBar();
+
+    updateSliderBackground(progressSlider);
+    updateSliderBackground(volumeSlider);
+
     document.getElementById('shuffle-btn').addEventListener('click', () => {
         sendCommand("SHUFFLE");
     });

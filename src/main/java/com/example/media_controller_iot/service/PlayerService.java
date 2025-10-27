@@ -17,9 +17,10 @@ public class PlayerService {
     private final SongsRepo songsRepo;
     private final PlayerCommandLogRepo playerCommandLogRepo;
     private final VolumeLogRepo volumeLogRepo;
+
     private boolean shuffleEnabled = false;
     private boolean repeatEnabled = false;
-
+    private double playbackPosition = 0;
 
     private final List<SseEmitter> emitters = new ArrayList<>();
 
@@ -38,7 +39,7 @@ public class PlayerService {
         this.songsRepo = songsRepo;
         this.playerCommandLogRepo = playerCommandLogRepo;
         this.volumeLogRepo = volumeLogRepo;
-        loadInitialSong(); // Load songs from db
+        loadInitialSong();
     }
 
     private void loadInitialSong() {
@@ -82,15 +83,17 @@ public class PlayerService {
             int idx = songs.indexOf(currentSong);
             currentSong = songs.get((idx + 1) % songs.size());
         }
+
+        playbackPosition = 0;
     }
-
-
 
     private void prevSong() {
         List<Songs> songs = songsRepo.findAll();
         if (songs.isEmpty()) return;
+
         int index = songs.indexOf(currentSong);
         currentSong = songs.get((index - 1 + songs.size()) % songs.size());
+        playbackPosition = 0;
     }
 
     private void toggleMute() {
@@ -128,20 +131,19 @@ public class PlayerService {
             case "PLAY_PAUSE" -> isPlaying = !isPlaying;
             case "SHUFFLE" -> shuffleEnabled = !shuffleEnabled;
             case "REPEAT" -> repeatEnabled = !repeatEnabled;
+            case "SEEK_FORWARD" -> playbackPosition += 10;
             default -> {
                 if (cmd.startsWith("VOLUME:")) handleVolume(cmd);
             }
         }
 
         lastCommand = cmd;
-
         playerCommandLogRepo.save(new PlayerCommandLog(cmd, currentSong));
         broadcastState();
     }
 
-    public Map<String, Object> getState() {  // Returns DB metadata
+    public Map<String, Object> getState() {
         if (currentSong == null) loadInitialSong();
-
 
         return Map.ofEntries(
                 Map.entry("isPlaying", isPlaying),
@@ -154,7 +156,9 @@ public class PlayerService {
                 Map.entry("isMuted", isMuted),
                 Map.entry("lastCommand", lastCommand),
                 Map.entry("shuffle", shuffleEnabled),
-                Map.entry("repeat", repeatEnabled)
+                Map.entry("repeat", repeatEnabled),
+                Map.entry("position", playbackPosition),
+                Map.entry("duration", 0)
         );
     }
 }

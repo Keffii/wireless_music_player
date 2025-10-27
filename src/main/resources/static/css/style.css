@@ -1,5 +1,4 @@
 body {
-
     color: #e0e0e0;
     font-family: Arial, sans-serif;
     text-align: center;
@@ -23,7 +22,6 @@ body {
     z-index: 999;
 }
 .hidden { display: none; }
-
 
 h2 {
     color: #F6AFC7;
@@ -52,9 +50,9 @@ h2 {
 
 .cover img {
     max-width: 100%;
-    border-radius: 10px;
+    border-radius: 25px;
+    border: 4px solid pink;
 }
-
 
 .song-name {
     color: #F6AFC7;
@@ -113,6 +111,83 @@ h2 {
 
 #volume-icon:hover {
     color: white;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: white;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* ---- Chrome / Edge / Safari support for sliders ---- */
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: transparent;
+    border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid hotpink;
+    border-radius: 50%;
+    margin-top: -6px;
+    cursor: pointer;
+}
+
+/* ---- Firefox Support for sliders ---- */
+input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: white;
+    border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-progress {
+    height: 6px;
+    background: hotpink;
+    border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid hotpink;
+    border-radius: 50%;
+    border: none;
+}
+
+/* ---- Edge / IE Fallback ---- */
+input[type="range"]::-ms-track {
+    height: 6px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+input[type="range"]::-ms-fill-lower {
+    background: hotpink;
+    border-radius: 3px;
+}
+
+input[type="range"]::-ms-fill-upper {
+    background: white;
+    border-radius: 3px;
+}
+
+input[type="range"]::-ms-thumb {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid hotpink;
+    border-radius: 50%;
 }
 
 button {
