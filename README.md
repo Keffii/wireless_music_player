@@ -1,4 +1,6 @@
 # Wireless Music Player
+![Image](https://github.com/user-attachments/assets/53ac9d6a-b36f-41a8-8709-eeacf165cd42)
+
 Music Player Web UI Application controlled either wirelessly by an ESP32 Bluetooth controller or using the UI.
 Features include:
 - Play/Pause
