@@ -24,7 +24,27 @@ Instructions:
 ## 2 - How to use
 - Open the web UI: http://localhost:8080/
   - UI subscribes to SSE at `/api/player/stream` and updates player state in real time.
-## SQL example for creating your SQL Schema
+
+## 3 - Database Telemetry
+
+The application uses Grafana to monitor music player activity and user interactions in real-time.
+
+<img width="1901" height="615" alt="Grafana Dashboard" src="https://github.com/user-attachments/assets/b7b6482a-0efe-4f38-922f-e09584d43591" />
+
+### Setting up Grafana (Optional)
+- Install Grafana from: https://grafana.com/grafana/download
+- Configure a MySQL data source pointing to your database
+- Access Grafana at: http://localhost:3000
+
+### Dashboard Metrics
+The dashboard tracks player usage and provides the following insights:
+
+- **Total Commands**: Aggregate count of all player commands executed (play, pause, next, prev, mute)
+- **Last Command**: Most recent command issued to the music player
+- **Volume Log Graph**: Historical volume level changes over time, tracking user volume adjustments
+- **Most Played Songs**: Ranked list of songs by play count, showing user listening preferences
+
+## 4 - SQL example for creating your SQL Schema
 Example SQL with placeholders — replace with your preferred database name, user and password.
 ```sql
 -- Replace placeholders with your database values
