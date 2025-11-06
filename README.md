@@ -14,7 +14,8 @@ Features include:
 Prerequisites:
 - Java JDK 21
 - MySQL
-- ESP32(Optional)
+- ESP32(Optional) [ESP32 Instructions and Information](https://github.com/Keffii/wireless_music_player/tree/feature/esp32-ble-communication)
+
 
 Instructions:
 - Step 1: Clone the Java project.
