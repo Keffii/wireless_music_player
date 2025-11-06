@@ -31,7 +31,7 @@ It includes 5 physical buttons and a potentiometer for volume control, sending c
 
 ## Usage
 
-1. Upload the code to your ESP32.  
+1. Upload the code to your ESP32.  [`esp32/media_controller_sketch.ino`](https://github.com/Keffii/wireless_music_player/blob/feature/esp32-ble-communication/esp32/media_controller_sketch.ino)
 2. Pair your computer or receiver with `ESP32_MediaController`.  
 3. Start the main application using the correct COM port. 
 4. Control playback and volume wirelessly.
