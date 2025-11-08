@@ -1,7 +1,6 @@
 # Wireless Music Player
-![Image](https://github.com/user-attachments/assets/53ac9d6a-b36f-41a8-8709-eeacf165cd42)
-
-Music Player Web UI Application controlled either wirelessly by an ESP32 Bluetooth controller or using the UI.
+Music Player Web UI Application controlled wirelessly by an ESP32 Bluetooth controller or using the UI.
+![Preview](https://github.com/user-attachments/assets/f8b3d224-719f-4d9d-9542-2cfae5082ded)
 
 Features include:
 - Play/Pause
@@ -10,12 +9,12 @@ Features include:
 - Repeat Song
 - Trackbar
 - Volume Control
+
 ## 1 - How to install
 Prerequisites:
 - Java JDK 21
 - MySQL
 - ESP32(Optional) [ESP32 Instructions and Information](https://github.com/Keffii/wireless_music_player/tree/feature/esp32-ble-communication)
-
 
 Instructions:
 - Step 1: Clone the Java project.
