@@ -54,3 +54,10 @@ CREATE USER '<DB_USER>'@'localhost' IDENTIFIED BY '<DB_PASSWORD>';
 GRANT ALL PRIVILEGES ON <DB_NAME>.* TO '<DB_USER>'@'localhost';
 FLUSH PRIVILEGES;
 ```
+
+## 5 - Features To Implement
+
+- [ ] **Spring Boot JWT Security** – Add authentication & authorization for API endpoints  
+- [ ] **AWS Integration** – Deploy backend & database using AWS services  
+- [ ] **Docker** – Containerize application for easier deployment  
+- [ ] **Login Page** – Create user interface for authentication
